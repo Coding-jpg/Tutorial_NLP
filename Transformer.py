@@ -12,7 +12,7 @@ def get_embedding(input_ids:torch.Tensor, model_ckpt:str, config) -> torch.Tenso
     token_emb = nn.Embedding(config.vocab_size, config.hidden_size) 
     """Embedding Process"""
     inputs_embeds = token_emb(input_ids)
-    return inputs_embeds, config
+    return inputs_embeds
 
 def get_token(text:str, model_ckpt:str) -> torch.Tensor:
     '''Tokenize init'''
@@ -20,11 +20,14 @@ def get_token(text:str, model_ckpt:str) -> torch.Tensor:
     tokens = tokenizer(text, return_tensors="pt", add_special_tokens=False)
     return tokens
 
-def dot_product_attention(query:torch.Tensor, key:torch.Tensor, value:torch.Tensor) -> torch.Tensor:
+def dot_product_attention(query:torch.Tensor, key:torch.Tensor, value:torch.Tensor, mask_f:bool) -> torch.Tensor:
     '''get attention'''
     dim_k = key.size(-1)
     scores = torch.bmm(query, key.transpose(1,2)) / sqrt(dim_k)
-    # print(f"Scores: {scores}")
+    '''mask'''
+
+    if mask_f is not None:
+        scores = scores.masked_fill(mask == 0, -float("inf"))
     weights = F.softmax(scores, dim=-1)
     return torch.bmm(weights,value)
 
@@ -57,9 +60,9 @@ class AttentionHead(nn.Module):
         self.k = nn.Linear(embed_dim, head_dim)
         self.v = nn.Linear(embed_dim, head_dim)
 
-    def forward(self, query, key, value):
+    def forward(self, query, key, value, mask:bool):
         attn_outputs = dot_product_attention(
-            self.q(query), self.k(key), self.v(value)
+            self.q(query), self.k(key), self.v(value), mask
         )
         return attn_outputs
     
@@ -112,6 +115,7 @@ class TransformerEncoderLayer(nn.Module):
         return x
 
 class TransformerEncoder(nn.Module):
+    '''Encoder'''
     def __init__(self, config):
         super().__init__()
         self.embedding = Embedding(config)
