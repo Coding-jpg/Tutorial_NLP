@@ -9,8 +9,7 @@ def get_embedding(input_ids:torch.Tensor, model_ckpt:str, config) -> torch.Tenso
     get token embedding, without position embedding
     """
     '''Embedding init'''
-    token_emb = nn.Embedding(config.vocab_size, config.hidden_size)
-
+    token_emb = nn.Embedding(config.vocab_size, config.hidden_size) 
     """Embedding Process"""
     inputs_embeds = token_emb(input_ids)
     return inputs_embeds, config
