@@ -3,13 +3,18 @@ from transformers import AutoTokenizer, AutoConfig, BertPreTrainedModel, BertMod
 import torch
 from torch import Tensor, nn
 import numpy as np
+from tqdm.auto import tqdm
+from seqeval.metrics import classification_report
+from seqeval.scheme import IOB2
 
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f'Using {device} device')
 
 categories = set()
 CHECKPOINT = "bert-base-chinese"
 TOKENIZER = AutoTokenizer.from_pretrained(CHECKPOINT)
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print(f'Using {device} device')
+label2id, id2label = {},{}
 
 class PeopleDaily(Dataset):
     '''{'sentence':'EXAMPLE', 'labels': [[idx_1,idx_2,'loc_1', 'LOC']]}'''
@@ -46,17 +51,17 @@ class PeopleDaily(Dataset):
     
 def label_mapping_dict() -> dict:
     '''get dict for label-to-id'''
+    global id2label, label2id
     id2label = {0:'O'}
     for c in list(sorted(categories)):
         id2label[len(id2label)] = f"B-{c}"
         id2label[len(id2label)] = f"I-{c}"
     label2id = {v: k for k, v in id2label.items()}
-    return label2id
+    return label2id, id2label
 
 def collate_fn(batch_samples) -> (AutoTokenizer, Tensor):
     '''batch data load function'''
     batch_sentences, batch_tags = [], []
-    label2id = label_mapping_dict()
     for sample in batch_samples:
         batch_sentences.append(sample['sentence'])
         batch_tags.append(sample['labels'])
@@ -84,12 +89,45 @@ class BertForNER(BertPreTrainedModel):
         super().__init__(config)
         self.bert = BertModel(config, add_pooling_layer=False)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier = nn.Linear(768, len())
+        self.classifier = nn.Linear(768, len(id2label))
+        self.post_init()
+
+    def forward(self, x):
+        bert_output = self.bert(**x)
+        sequence_output = bert_output.last_hidden_state
+        sequence_output = self.dropout(sequence_output)
+        logits = self.classifier(sequence_output)
+        return logits
+    
+def train_loop(dataloader, model, loss_fn, optimizer, lr_scheduler, epoch, total_loss):
+    progress_bar = tqdm(range(len(dataloader)))
+    progress_bar.set_description(f'loss: {0:>7f}')
+    finish_batch_num = (epoch-1) * len(dataloader)
+
+    model.train()
+    for batch, (X, y) in enumerate(dataloader, start=1):
+        X, y = X.to(device), y.to(device)
+        pred = model(X)
+        loss = loss_fn(pred.permute(0, 2, 1), y)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        lr_scheduler.step()
+
+        total_loss += loss.item()
+        progress_bar.set_description(f'loss: {total_loss/(finish_batch_num + batch):>7f}')
+        progress_bar.update(1)
+    return total_loss
 
 if __name__ == '__main__':
+    '''
+    prepare the dataloader
+    '''
     train_data = PeopleDaily('data/china-people-daily-ner-corpus/example.train')
     valid_data = PeopleDaily('data/china-people-daily-ner-corpus/example.dev')
     test_data = PeopleDaily('data/china-people-daily-ner-corpus/example.test')
+    label_mapping_dict()
     # print(test_data[0])
     # print(label_mapping_dict())
     train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, collate_fn=collate_fn)
@@ -101,3 +139,12 @@ if __name__ == '__main__':
     # print('batch_y shape:', batch_y.shape)
     # print(batch_X)
     # print(batch_y)
+
+    '''
+    set the model
+    '''
+    config = AutoConfig.from_pretrained(CHECKPOINT)
+    model = BertForNER.from_pretrained(CHECKPOINT, config=config).to(device)
+    # print(model)
+    # outputs = model(batch_X)
+    # print(outputs.shape)
