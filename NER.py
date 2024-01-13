@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoConfig, BertPreTrainedModel, BertModel
+from transformers import AutoTokenizer, AutoConfig, BertPreTrainedModel, BertModel, AdamW, get_scheduler
 import torch
 from torch import Tensor, nn
 import numpy as np
@@ -120,6 +120,23 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_scheduler, epoch, total
         progress_bar.update(1)
     return total_loss
 
+def test_loop(dataloder, model):
+    true_labels, true_predictions = [], []
+    
+    model.eval()
+    with torch.no_grad():
+        for X, y in tqdm(dataloder):
+            X, y = X.to(device), y.to(device)
+            pred = model(X)
+            predictions = pred.argmax(dim=-1).cpu().numpy().tolist()
+            labels = y.cpu().numpy().tolist()
+            true_labels = [[id2label[int(l)] for l in label if l != -100] for label in labels]
+            true_predictions += [
+                [id2label[int(p)] for (p,l) in zip(prediction, label) if l != -100]
+                for prediction, label in zip(predictions, labels)
+            ]
+    print(classification_report(true_labels, true_predictions, mode='strict', scheme=IOB2))
+
 if __name__ == '__main__':
     '''
     prepare the dataloader
@@ -148,3 +165,25 @@ if __name__ == '__main__':
     # print(model)
     # outputs = model(batch_X)
     # print(outputs.shape)
+
+    '''
+    train_test loop
+    '''
+    learning_rate = 1e-5
+    epoch_num = 3
+
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = AdamW(model.parameters(), lr=learning_rate)
+    lr_scheduler = get_scheduler(
+        "linear",
+        optimizer=optimizer,
+        num_warmup_steps=0,
+        num_training_steps=epoch_num*len(train_dataloader),
+    )
+
+    total_loss = 0.
+    for t in range(epoch_num):
+        print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
+        total_loss = train_loop(train_dataloader, model, loss_fn, optimizer, lr_scheduler, t+1, total_loss)
+        test_loop(valid_dataloader, model)
+    print("Done!")
