@@ -120,22 +120,32 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_scheduler, epoch, total
         progress_bar.update(1)
     return total_loss
 
-def test_loop(dataloder, model):
+def test_loop(dataloader, model):
     true_labels, true_predictions = [], []
-    
+
     model.eval()
     with torch.no_grad():
-        for X, y in tqdm(dataloder):
+        for X, y in tqdm(dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
             predictions = pred.argmax(dim=-1).cpu().numpy().tolist()
             labels = y.cpu().numpy().tolist()
-            true_labels = [[id2label[int(l)] for l in label if l != -100] for label in labels]
+            true_labels += [[id2label[int(l)] for l in label if l != -100] for label in labels]
             true_predictions += [
-                [id2label[int(p)] for (p,l) in zip(prediction, label) if l != -100]
+                [id2label[int(p)] for (p, l) in zip(prediction, label) if l != -100]
                 for prediction, label in zip(predictions, labels)
             ]
+    print(true_labels)
+    print(true_predictions)
     print(classification_report(true_labels, true_predictions, mode='strict', scheme=IOB2))
+    return classification_report(
+      true_labels, 
+      true_predictions, 
+      mode='strict', 
+      scheme=IOB2, 
+      output_dict=True
+    )
+
 
 if __name__ == '__main__':
     '''
@@ -167,7 +177,7 @@ if __name__ == '__main__':
     # print(outputs.shape)
 
     '''
-    train_test loop
+    train_valid loop
     '''
     learning_rate = 1e-5
     epoch_num = 3
@@ -182,8 +192,18 @@ if __name__ == '__main__':
     )
 
     total_loss = 0.
+    best_f1 = 0.
     for t in range(epoch_num):
         print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
         total_loss = train_loop(train_dataloader, model, loss_fn, optimizer, lr_scheduler, t+1, total_loss)
-        test_loop(valid_dataloader, model)
+        metrics = test_loop(valid_dataloader, model)
+        valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
+        valid_f1 = metrics['weighted avg']['f1-score']
+        if valid_f1 > best_f1:
+            best_f1 = valid_f1
+            print('saving new weights...\n')
+            torch.save(
+                model.state_dict(), 
+                f'epoch_{t+1}_valid_macrof1_{(100*valid_macro_f1):0.3f}_microf1_{(100*valid_micro_f1):0.3f}_weights.bin'
+            )
     print("Done!")
