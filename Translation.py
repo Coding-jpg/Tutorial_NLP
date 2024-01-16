@@ -7,4 +7,5 @@ class TransData(Dataset):
 
     def load_data(self, data_file) -> dict:
         Data = {}
+        
         return Data
