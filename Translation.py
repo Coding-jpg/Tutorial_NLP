@@ -127,63 +127,63 @@ def translate(checkpoint:str, sentence:str):
         print(sentence_pred)
 
 if __name__ == "__main__":
-    # """Dataset"""
-    # max_size = 220000
-    # train_size = 200000
-    # valid_size = 20000
+    """Dataset"""
+    max_size = 220000
+    train_size = 200000
+    valid_size = 20000
 
-    # data = TransData("data/translation2019zh/translation2019zh_train.json", max_size)
-    # train_data, valid_data = random_split(data, [train_size, valid_size]) 
-    # test_data = TransData("data/translation2019zh/translation2019zh_valid.json", max_size)
-    # # print(f"train_data size: {len(train_data)}\nvalid_data size: {len(valid_data)}\ntest_data size: {len(test_data)}\nsample:{next(iter(train_data))}")
+    data = TransData("data/translation2019zh/translation2019zh_train.json", max_size)
+    train_data, valid_data = random_split(data, [train_size, valid_size]) 
+    test_data = TransData("data/translation2019zh/translation2019zh_valid.json", max_size)
+    # print(f"train_data size: {len(train_data)}\nvalid_data size: {len(valid_data)}\ntest_data size: {len(test_data)}\nsample:{next(iter(train_data))}")
 
-    # """Dataloader"""
-    # batch_size = 4
-    # max_input_length = 128
-    # max_target_length = 128
-    # num_workers = 4
+    """Dataloader"""
+    batch_size = 4
+    max_input_length = 128
+    max_target_length = 128
+    num_workers = 4
     model_checkpoint = "Helsinki-NLP/opus-mt-zh-en"
 
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-    # model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
-    # model = model.to(device)
-    # print(f"tokenizer: {tokenizer}\nmodel: {model}")
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
+    model = model.to(device)
+    print(f"tokenizer: {tokenizer}\nmodel: {model}")
 
-    # train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
-    # valid_dataloader = DataLoader(valid_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
-    # test_dataloader = DataLoader(test_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
-    # # print(next(iter(valid_dataloader)))
+    train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    valid_dataloader = DataLoader(valid_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
+    test_dataloader = DataLoader(test_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
+    # print(next(iter(valid_dataloader)))
 
-    # """Train_valid loop"""
-    # learning_rate = 1e-5
-    # epoch_num = 3
-    # bleu = BLEU()
+    """Train_valid loop"""
+    learning_rate = 1e-5
+    epoch_num = 1
+    bleu = BLEU()
 
-    # optimizer = AdamW(model.parameters(), lr=learning_rate)
-    # lr_scheduler = get_scheduler(
-    #     "linear",
-    #     optimizer=optimizer,
-    #     num_warmup_steps=0,
-    #     num_training_steps=epoch_num*len(train_dataloader),
-    # )
+    optimizer = AdamW(model.parameters(), lr=learning_rate)
+    lr_scheduler = get_scheduler(
+        "linear",
+        optimizer=optimizer,
+        num_warmup_steps=0,
+        num_training_steps=epoch_num*len(train_dataloader),
+    )
 
-    # total_loss = 0.
-    # best_bleu = 0.
-    # for t in range(epoch_num):
-    #     print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
-    #     total_loss = train_loop(train_dataloader, model, optimizer, lr_scheduler, t+1, total_loss)
-    #     valid_bleu = test_loop(valid_dataloader, model)
-    #     if valid_bleu > best_bleu:
-    #         best_bleu = valid_bleu
-    #         print('saving new weights...\n')
-    #         torch.save(
-    #             model.state_dict(),
-    #             f'epoch_{t+1}_valid_bleu_{valid_bleu:0.2f}_model_weights.bin'
-    #         )
-    # print("Done!")
+    total_loss = 0.
+    best_bleu = 0.
+    for t in range(epoch_num):
+        print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
+        total_loss = train_loop(train_dataloader, model, optimizer, lr_scheduler, t+1, total_loss)
+        valid_bleu = test_loop(valid_dataloader, model)
+        if valid_bleu > best_bleu:
+            best_bleu = valid_bleu
+            print('saving new weights...\n')
+            torch.save(
+                model.state_dict(),
+                f'epoch_{t+1}_valid_bleu_{valid_bleu:0.2f}_model_weights.bin'
+            )
+    print("Done!")
 
     """Test"""
-    checkpoint_ft = 'epoch_1_valid_bleu_27.60_model_weights.bin'
-    chinese_sentence = '这是一个翻译测试'
-    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint_ft)
-    translate(checkpoint_ft, chinese_sentence)
+    # checkpoint_ft = 'epoch_1_valid_bleu_27.60_model_weights.bin'
+    # chinese_sentence = '这是一个翻译测试'
+    # model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
+    # translate(checkpoint_ft, chinese_sentence)
