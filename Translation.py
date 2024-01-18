@@ -112,6 +112,7 @@ if __name__ == "__main__":
     max_size = 220000
     train_size = 200000
     valid_size = 20000
+
     data = TransData("data/translation2019zh/translation2019zh_train.json", max_size)
     train_data, valid_data = random_split(data, [train_size, valid_size]) 
     test_data = TransData("data/translation2019zh/translation2019zh_valid.json", max_size)
@@ -121,13 +122,15 @@ if __name__ == "__main__":
     batch_size = 4
     max_input_length = 128
     max_target_length = 128
+    num_workers = 4
     model_checkpoint = "Helsinki-NLP/opus-mt-zh-en"
+
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
     model = model.to(device)
     # print(f"tokenizer: {tokenizer}\nmodel: {model}")
 
-    train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, collate_fn=collate_fn)
+    train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
     valid_dataloader = DataLoader(valid_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
     test_dataloader = DataLoader(test_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
     # print(next(iter(valid_dataloader)))
