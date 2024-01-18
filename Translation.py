@@ -107,6 +107,19 @@ def test_loop(dataloader, model):
     print(f"BLEU: {bleu_score:>0.2f}\n")
     return bleu_score
 
+def translate(model:str, sentence:str) -> str:
+    model.load_state_dict(torch.load('epoch_1_valid_bleu_27.60_model_weights.bin'))
+    model.eval()
+    with torch.no_grad():
+        input_token_id = tokenizer(
+            sentence,
+            padding=True,
+            truncation=True,
+            max_length=max_input_length,
+            return_tensors="pt"
+        )
+        print(f"input_token_id: {input_token_id}")
+
 if __name__ == "__main__":
     """Dataset"""
     max_size = 220000
@@ -130,35 +143,40 @@ if __name__ == "__main__":
     model = model.to(device)
     # print(f"tokenizer: {tokenizer}\nmodel: {model}")
 
-    train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
-    valid_dataloader = DataLoader(valid_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
-    test_dataloader = DataLoader(test_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
-    # print(next(iter(valid_dataloader)))
+    # train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    # valid_dataloader = DataLoader(valid_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
+    # test_dataloader = DataLoader(test_data, batch_size=4, shuffle=False, collate_fn=collate_fn)
+    # # print(next(iter(valid_dataloader)))
 
-    """Train_valid loop"""
-    learning_rate = 1e-5
-    epoch_num = 3
-    bleu = BLEU()
+    # """Train_valid loop"""
+    # learning_rate = 1e-5
+    # epoch_num = 3
+    # bleu = BLEU()
 
-    optimizer = AdamW(model.parameters(), lr=learning_rate)
-    lr_scheduler = get_scheduler(
-        "linear",
-        optimizer=optimizer,
-        num_warmup_steps=0,
-        num_training_steps=epoch_num*len(train_dataloader),
-    )
+    # optimizer = AdamW(model.parameters(), lr=learning_rate)
+    # lr_scheduler = get_scheduler(
+    #     "linear",
+    #     optimizer=optimizer,
+    #     num_warmup_steps=0,
+    #     num_training_steps=epoch_num*len(train_dataloader),
+    # )
 
-    total_loss = 0.
-    best_bleu = 0.
-    for t in range(epoch_num):
-        print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
-        total_loss = train_loop(train_dataloader, model, optimizer, lr_scheduler, t+1, total_loss)
-        valid_bleu = test_loop(valid_dataloader, model)
-        if valid_bleu > best_bleu:
-            best_bleu = valid_bleu
-            print('saving new weights...\n')
-            torch.save(
-                model.state_dict(),
-                f'epoch_{t+1}_valid_bleu_{valid_bleu:0.2f}_model_weights.bin'
-            )
-    print("Done!")
+    # total_loss = 0.
+    # best_bleu = 0.
+    # for t in range(epoch_num):
+    #     print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
+    #     total_loss = train_loop(train_dataloader, model, optimizer, lr_scheduler, t+1, total_loss)
+    #     valid_bleu = test_loop(valid_dataloader, model)
+    #     if valid_bleu > best_bleu:
+    #         best_bleu = valid_bleu
+    #         print('saving new weights...\n')
+    #         torch.save(
+    #             model.state_dict(),
+    #             f'epoch_{t+1}_valid_bleu_{valid_bleu:0.2f}_model_weights.bin'
+    #         )
+    # print("Done!")
+
+    """Test"""
+    checkpoint_ft = 'epoch_1_valid_bleu_27.60_model_weights.bin'
+    chinese_sentence = '这是一个翻译测试'
+    translate(checkpoint_ft, chinese_sentence)
