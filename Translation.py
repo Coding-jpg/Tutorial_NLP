@@ -108,45 +108,45 @@ def test_loop(dataloader, model):
     return bleu_score
 
 def translate(checkpoint:str, sentence:str) -> str:
-    model.load_state_dict(torch.load(checkpoint, map_location=device)).to(device)
+    model.load_state_dict(torch.load(checkpoint)).to(device)
     model.eval()
     with torch.no_grad():
         input_token_id = tokenizer(
             sentence,
             padding=True,
             truncation=True,
-            max_length=max_input_length,
+            max_length=128,
             return_tensors="pt"
         ).to(device)
         # print(f"input_token_id: {input_token_id}")
         generated_token = model.generate(
             input_token_id["input_ids"],
             attention_mask=input_token_id["attention_mask"],
-            max_length=max_target_length,
-        ).numpy()
+            max_length=128,
+        )
         print(f"generated_token_id:{generated_token}")
 
 if __name__ == "__main__":
-    """Dataset"""
-    max_size = 220000
-    train_size = 200000
-    valid_size = 20000
+    # """Dataset"""
+    # max_size = 220000
+    # train_size = 200000
+    # valid_size = 20000
 
-    data = TransData("data/translation2019zh/translation2019zh_train.json", max_size)
-    train_data, valid_data = random_split(data, [train_size, valid_size]) 
-    test_data = TransData("data/translation2019zh/translation2019zh_valid.json", max_size)
-    # print(f"train_data size: {len(train_data)}\nvalid_data size: {len(valid_data)}\ntest_data size: {len(test_data)}\nsample:{next(iter(train_data))}")
+    # data = TransData("data/translation2019zh/translation2019zh_train.json", max_size)
+    # train_data, valid_data = random_split(data, [train_size, valid_size]) 
+    # test_data = TransData("data/translation2019zh/translation2019zh_valid.json", max_size)
+    # # print(f"train_data size: {len(train_data)}\nvalid_data size: {len(valid_data)}\ntest_data size: {len(test_data)}\nsample:{next(iter(train_data))}")
 
-    """Dataloader"""
-    batch_size = 4
-    max_input_length = 128
-    max_target_length = 128
-    num_workers = 4
-    model_checkpoint = "Helsinki-NLP/opus-mt-zh-en"
+    # """Dataloader"""
+    # batch_size = 4
+    # max_input_length = 128
+    # max_target_length = 128
+    # num_workers = 4
+    # model_checkpoint = "Helsinki-NLP/opus-mt-zh-en"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
-    model = model.to(device)
+    # tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    # model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
+    # model = model.to(device)
     # print(f"tokenizer: {tokenizer}\nmodel: {model}")
 
     # train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
@@ -185,4 +185,6 @@ if __name__ == "__main__":
     """Test"""
     checkpoint_ft = 'epoch_1_valid_bleu_27.60_model_weights.bin'
     chinese_sentence = '这是一个翻译测试'
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint_ft)
+    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint_ft)
     translate(checkpoint_ft, chinese_sentence)
