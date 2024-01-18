@@ -3,6 +3,7 @@ import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformers import AdamW, get_scheduler
 from sacrebleu.metrics import BLEU
+import numpy as np
 
 import json
 from tqdm.auto import tqdm
@@ -95,7 +96,7 @@ def test_loop(dataloader, model):
                 max_length=max_target_length,
             ).cpu().numpy()
         label_tokens = batch_data["labels"].cpu().numpy()
-        label_tokens = torch.where(label_tokens != -100, label_tokens, tokenizer.pad_token_id)
+        label_tokens = np.where(label_tokens != -100, label_tokens, tokenizer.pad_token_id)
 
         decoded_preds = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
         decoded_labels = tokenizer.batch_decode(label_tokens, skip_special_tokens=True)
