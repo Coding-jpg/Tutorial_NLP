@@ -107,8 +107,8 @@ def test_loop(dataloader, model):
     print(f"BLEU: {bleu_score:>0.2f}\n")
     return bleu_score
 
-def translate(model:str, sentence:str) -> str:
-    model.load_state_dict(torch.load('epoch_1_valid_bleu_27.60_model_weights.bin'))
+def translate(checkpoint:str, sentence:str) -> str:
+    model.load_state_dict(torch.load(checkpoint))
     model.eval()
     with torch.no_grad():
         input_token_id = tokenizer(
@@ -118,7 +118,13 @@ def translate(model:str, sentence:str) -> str:
             max_length=max_input_length,
             return_tensors="pt"
         )
-        print(f"input_token_id: {input_token_id}")
+        # print(f"input_token_id: {input_token_id}")
+        generated_token = model.generate(
+            input_token_id["input_ids"],
+            attention_mask=input_token_id["attention_mask"],
+            max_length=max_target_length,
+        ).cpu().numpy()
+        print(f"generated_token_id:{generated_token}")
 
 if __name__ == "__main__":
     """Dataset"""
