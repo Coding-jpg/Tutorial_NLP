@@ -108,14 +108,12 @@ def test_loop(dataloader, model):
     return bleu_score
 
 def translate(checkpoint:str, sentence:str):
-    # model.load_state_dict(torch.load(checkpoint)).to(device)
+    model.load_state_dict(torch.load(checkpoint)).to(device)
+
     model.eval()
     with torch.no_grad():
         input_token_id = tokenizer(
             sentence,
-            padding=True,
-            truncation=True,
-            max_length=128,
             return_tensors="pt"
         ).to(device)
         # print(f"input_token_id: {input_token_id}")
@@ -125,7 +123,7 @@ def translate(checkpoint:str, sentence:str):
             max_length=128,
         )
         # print(f"generated_token_id:{generated_token}")
-        sentence_pred = tokenizer.decode(generated_token, skip_special_tokens=True)
+        sentence_pred = tokenizer.decode(generated_token[0], skip_special_tokens=True)
         print(sentence_pred)
 
 if __name__ == "__main__":
@@ -187,6 +185,5 @@ if __name__ == "__main__":
     """Test"""
     checkpoint_ft = 'epoch_1_valid_bleu_27.60_model_weights.bin'
     chinese_sentence = '这是一个翻译测试'
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_ft)
     model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint_ft)
     translate(checkpoint_ft, chinese_sentence)
