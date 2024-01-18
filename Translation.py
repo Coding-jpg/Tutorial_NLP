@@ -107,8 +107,8 @@ def test_loop(dataloader, model):
     print(f"BLEU: {bleu_score:>0.2f}\n")
     return bleu_score
 
-def translate(checkpoint:str, sentence:str) -> str:
-    model.load_state_dict(torch.load(checkpoint)).to(device)
+def translate(checkpoint:str, sentence:str):
+    # model.load_state_dict(torch.load(checkpoint)).to(device)
     model.eval()
     with torch.no_grad():
         input_token_id = tokenizer(
@@ -124,7 +124,9 @@ def translate(checkpoint:str, sentence:str) -> str:
             attention_mask=input_token_id["attention_mask"],
             max_length=128,
         )
-        print(f"generated_token_id:{generated_token}")
+        # print(f"generated_token_id:{generated_token}")
+        sentence_pred = tokenizer.decode(generated_token, skip_special_tokens=True)
+        print(sentence_pred)
 
 if __name__ == "__main__":
     # """Dataset"""
@@ -142,9 +144,9 @@ if __name__ == "__main__":
     # max_input_length = 128
     # max_target_length = 128
     # num_workers = 4
-    # model_checkpoint = "Helsinki-NLP/opus-mt-zh-en"
+    model_checkpoint = "Helsinki-NLP/opus-mt-zh-en"
 
-    # tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     # model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
     # model = model.to(device)
     # print(f"tokenizer: {tokenizer}\nmodel: {model}")
