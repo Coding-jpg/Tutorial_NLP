@@ -108,7 +108,7 @@ def test_loop(dataloader, model):
     return bleu_score
 
 def translate(checkpoint:str, sentence:str) -> str:
-    model.load_state_dict(torch.load(checkpoint))
+    model.load_state_dict(torch.load(checkpoint, map_location=device)).to(device)
     model.eval()
     with torch.no_grad():
         input_token_id = tokenizer(
@@ -117,13 +117,13 @@ def translate(checkpoint:str, sentence:str) -> str:
             truncation=True,
             max_length=max_input_length,
             return_tensors="pt"
-        )
+        ).to(device)
         # print(f"input_token_id: {input_token_id}")
         generated_token = model.generate(
             input_token_id["input_ids"],
             attention_mask=input_token_id["attention_mask"],
             max_length=max_target_length,
-        ).cpu().numpy()
+        ).numpy()
         print(f"generated_token_id:{generated_token}")
 
 if __name__ == "__main__":
