@@ -145,9 +145,11 @@ def infer(origin_text:str, model) -> str:
         ).to(device)
         # print(origin_tokens['input_ids'])
         result_tokens = model.generate(
-            input_token_id=origin_tokens['input_ids'],
+            origin_tokens['input_ids'],
             attention_mask=origin_tokens['attention_mask'],
-            max_length=128
+            max_length=32,
+            no_repeat_ngram_size=2,
+            num_beams=4
         )
         result_text = tokenizer.decode(result_tokens[0], skip_special_tokens=True)
         return result_text
@@ -185,8 +187,6 @@ if __name__ == '__main__':
         rouge = Rouge()
         LR = 2e-5
         EPOCHS = 1
-        BEAM_SIZE = 4
-        NO_REPEAT_NGRAM_SIZE = 2
 
         OPTIMIZER = AdamW(model.parameters(), lr=LR)
         LR_SCHEDULER = get_scheduler(
