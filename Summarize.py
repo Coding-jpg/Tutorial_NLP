@@ -134,6 +134,14 @@ def test_loop(dataloader, model, mode='Valid'):
     print(f"{mode} Rouge1: {result['rouge-1']:>0.2f} Rouge2: {result['rouge-2']:>0.2f} RougeL: {result['rouge-l']:>0.2f}\n")
     return result
 
+def infer(origin_text:str, model) -> str:
+    origin_tokens = tokenizer(
+        origin_text,
+        return_tensors="pt"
+    ).to(device)
+    print(origin_tokens['input_ids'])
+    # result_tokens = model.generate()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train or Inference")
     parser.add_argument("mode", type=str, help="Train or Inference")
@@ -193,4 +201,7 @@ if __name__ == '__main__':
             #     torch.save(model.state_dict(), f'epoch_{t+1}_valid_rouge_{rouge_avg:0.4f}_model_weights.bin')
         print("Done!")
     elif args.mode == "infer":
-        pass
+        CHECKPOINT = "csebuetnlp/mT5_multilingual_XLSum"
+        tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT)
+        model = AutoModelForSeq2SeqLM.from_pretrained(CHECKPOINT)
+        infer("这是一个文本摘要的测试，将用于进行文本的摘要。", model)
