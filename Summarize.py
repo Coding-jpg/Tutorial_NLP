@@ -151,7 +151,7 @@ if __name__ == '__main__':
         '''DataLoader'''
         MAX_INPUT_LENGTH = 512
         MAX_TARGET_LENGTH = 64
-        BATCH_SIZE = 32
+        BATCH_SIZE = 8
         CHECKPOINT = "csebuetnlp/mT5_multilingual_XLSum"
         
         tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT)
