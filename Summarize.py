@@ -143,8 +143,14 @@ def infer(origin_text:str, model) -> str:
             origin_text,
             return_tensors="pt"
         ).to(device)
-        print(origin_tokens['input_ids'])
-        # result_tokens = model.generate()
+        # print(origin_tokens['input_ids'])
+        result_tokens = model.generate(
+            input_token_id=origin_tokens['input_ids'],
+            attention_mask=origin_tokens['attention_mask'],
+            max_length=128
+        )
+        result_text = tokenizer.decode(result_tokens[0], skip_special_tokens=True)
+        return result_text
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train or Inference")
@@ -209,4 +215,8 @@ if __name__ == '__main__':
         tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT)
         model = AutoModelForSeq2SeqLM.from_pretrained(CHECKPOINT)
         model.to(device)
-        infer("这是一个文本摘要的测试，将用于进行文本的摘要。", model)
+        
+        origin_text = "这是一个文本摘要的测试，将用于进行文本的摘要。"
+        summarized_text = infer(origin_text, model)
+
+        print(f"origin_text:{origin_text}\nsummarized_text:{summarized_text}")
