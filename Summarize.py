@@ -135,13 +135,16 @@ def test_loop(dataloader, model, mode='Valid'):
     return result
 
 def infer(origin_text:str, model) -> str:
-    model.load_state_dict(torch.load("checkpoint_summarize.bin")).to(device)
-    origin_tokens = tokenizer(
-        origin_text,
-        return_tensors="pt"
-    ).to(device)
-    print(origin_tokens['input_ids'])
-    # result_tokens = model.generate()
+    model.load_state_dict(torch.load("checkpoint_summarize.bin"))
+    
+    model.eval()
+    with torch.no_grad():
+        origin_tokens = tokenizer(
+            origin_text,
+            return_tensors="pt"
+        ).to(device)
+        print(origin_tokens['input_ids'])
+        # result_tokens = model.generate()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train or Inference")
@@ -205,4 +208,5 @@ if __name__ == '__main__':
         CHECKPOINT = "csebuetnlp/mT5_multilingual_XLSum"
         tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT)
         model = AutoModelForSeq2SeqLM.from_pretrained(CHECKPOINT)
+        model.to(device)
         infer("这是一个文本摘要的测试，将用于进行文本的摘要。", model)
