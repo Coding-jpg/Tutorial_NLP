@@ -120,7 +120,7 @@ def test_loop(dataloader, model, mode='Valid'):
             ).cpu().numpy()
         if isinstance(generated_tokens, tuple):
             generated_tokens = generated_tokens[0]
-        label_tokens = batch_data["labels"]
+        label_tokens = batch_data["labels"].cpu()
         label_tokens = np.where(label_tokens != -100, label_tokens, tokenizer.pad_token_id)
 
         decoded_preds = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
