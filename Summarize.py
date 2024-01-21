@@ -135,7 +135,7 @@ def test_loop(dataloader, model, mode='Valid'):
     return result
 
 def infer(origin_text:str, model) -> str:
-    model.load_state_dict("checkpoint_summarize.bin").to(device)
+    model.load_state_dict(torch.load("checkpoint_summarize.bin")).to(device)
     origin_tokens = tokenizer(
         origin_text,
         return_tensors="pt"
