@@ -127,7 +127,7 @@ def test_loop(dataloader, model, mode='Valid'):
         decoded_labels = tokenizer.batch_decode(label_tokens, skip_special_tokens=True)
 
         preds += [' '.join(pred.strip()) for pred in decoded_preds]
-        labels += [' '.json(label.strip()) for label in decoded_labels]
+        labels += [' '.join(label.strip()) for label in decoded_labels]
     scores = rouge.get_scores(hyps=preds, refs=labels, avg=True)
     result = {key: value['f'] * 100 for key, value in scores.items()}
     result['avg'] = np.mean(list(result.values()))
