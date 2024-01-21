@@ -183,12 +183,14 @@ if __name__ == '__main__':
         for t in range(EPOCHS):
             print(f"Epoch {t+1}/{EPOCHS}\n-------------------------------")
             total_loss = train_loop(train_loader, model, OPTIMIZER, LR_SCHEDULER, EPOCHS, total_loss)
+            torch.save(model.state_dict(), 'checkpoint_summarize.bin')
             valid_rouge = test_loop(valid_loader, model, mode='Valid')
             rouge_avg = valid_rouge['avg']
-            if rouge_avg > best_avg_rouge:
-                best_avg_rouge = rouge_avg
-                print('saving new weights...\n')
-                torch.save(model.state_dict(), f'epoch_{t+1}_valid_rouge_{rouge_avg:0.4f}_model_weights.bin')
+            print(f'rouge_avg: {rouge_avg}')
+            # if rouge_avg > best_avg_rouge:
+            #     best_avg_rouge = rouge_avg
+            #     print('saving new weights...\n')
+            #     torch.save(model.state_dict(), f'epoch_{t+1}_valid_rouge_{rouge_avg:0.4f}_model_weights.bin')
         print("Done!")
     elif args.mode == "infer":
         pass
