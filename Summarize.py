@@ -151,7 +151,7 @@ if __name__ == '__main__':
         '''DataLoader'''
         MAX_INPUT_LENGTH = 512
         MAX_TARGET_LENGTH = 64
-        BATCH_SIZE = 8
+        BATCH_SIZE = 10
         CHECKPOINT = "csebuetnlp/mT5_multilingual_XLSum"
         
         tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         """Train_Valid"""
         rouge = Rouge()
         LR = 2e-5
-        EPOCHS = 3
+        EPOCHS = 1
         BEAM_SIZE = 4
         NO_REPEAT_NGRAM_SIZE = 2
 
